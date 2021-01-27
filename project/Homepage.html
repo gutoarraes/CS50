@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <link rel="stylesheet" href="style.css">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <head>
+        <title>
+            Homepage
+        </title>
+        <nav style="font-size:16px; text-align:center">Home |<a href="msfm.html"> A man's search for meaning </a> | <a href="aamt.html"> As a man thinketh </a>| <a href="ge.html"> Great expectations </a>| <a href="cap.html">Crime and punishment</a></nav>
+<script>
+    function createList(){
+        var mylist = document.getElementById("myList");
+        document.getElementById("favourite").value = mylist.options[mylist.selectedIndex].text;
+    }
+</script>
+
+
+        </head>
+    <body style="background-color:rgb(30,145,202)">
+
+<form>
+    <b>
+
+    <select id = "myList" onchange = "window.location.href=this.value">
+        <option> Select a book</option>
+        <option value="ge.html">Great Expectations</option>
+        <option value="msfm.html">Man's Search for Meaning</option>
+        <option value="aamt.html">As a Man Thinketh</option>
+        <option value="cap.html">Crime and Punishment</option>
+    </select>
+    </b>
+</form>
+        <p class="header">Click on a book cover to read its information and plot</p>
+        <figure>
+            <img class="pos1" src="1.jpg" alt="Could not display image" width="300" height="450";>
+            <p class="legenda1"> Great Expectations - Charles Dickens
+            </p>
+        </figure>
+
+        <figure>
+            <img class="pos2" src="2.jpg" alt="Could not display image" width="300" height="450";>
+            <p class="legenda2"> Crime and Punishment - Fyodor Dostoevsky
+            </p>
+        </figure>
+
+        <figure>
+            <img class="pos3" src="3.jpg" alt="Could not display image" width="300" height="450";>
+            <p class="legenda3"> As a Man Thinketh - James Allen
+            </p>
+        </figure>
+
+        <figure>
+           <img class="pos4" src="4.jpg" alt="Could not display image" width="300" height="450";>
+           <p class="legenda4">Man's search for meaning - Viktor E. Frankl
+           </p>
+        </figure>
+
+
+<div class="text-center">
+  <div class="spinner-border" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+
+<script>
+    let spinnerWrapper = document.querySelector('.spinner-border');
+
+    window.addEventListener('load', function() {
+        spinnerWrapper.style.display = 'none';
+    })
+</script>
+
+        <p class="bottom">CS 50 Project</p>
+    </body>
+</html>

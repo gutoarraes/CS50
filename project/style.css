@@ -1,0 +1,71 @@
+
+.pos1
+{
+    position:absolute;
+    top: 10vh;
+    left: 25vw;
+
+}
+.pos2
+{
+    position:absolute;
+    top: 10vh;
+    left: 55vw;
+
+}
+.pos3
+{
+    position:absolute;
+    top: 50vh;
+    left: 25vw;
+
+}
+.pos4
+{
+    position:absolute;
+    top:50vh;
+    left:55vw;
+}
+.legenda1
+{
+    position:absolute;
+    top:45vh;
+    left:27vw;
+}
+
+.legenda2
+{
+    position:absolute;
+    top:45vh;
+    left:55vw;
+}
+
+.legenda3
+{
+    position:absolute;
+    top:84vh;
+    left:27vw;
+}
+
+.legenda4
+{
+    position:absolute;
+    top:84vh;
+    left:56vw;
+}
+
+.header
+{
+    text-align:center;
+    font-size:30px;
+    font:arial;
+    border:dotted;
+}
+
+.bottom
+{
+    position:relative;
+    top:1100px;
+    text-align:center;
+    font-size:20px;
+}

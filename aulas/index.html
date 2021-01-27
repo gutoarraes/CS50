@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <title> Hello! </title>
+    <script>
+        function greet()
+        {
+        let name = document.querySelector('#name').value;
+        if(name === '')
+            {
+                name = 'world';
+            }
+            document.querySelector('#result').innerHTML = 'Hello, ' + name + '!';
+        }
+        </script>
+    </head>
+    <body>
+        <form onsubmit="greet(); submit=false";>
+            <input type="text" id="name">
+            <input type="submit">
+        </form>
+        <div id="result">
+            Hello!
+        </div>
+    </body>
+</html>
