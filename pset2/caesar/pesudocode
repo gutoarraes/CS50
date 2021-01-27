@@ -1,0 +1,8 @@
+Write a program that encodes text input by the user with a key of their choice
+
+get key
+get text
+encipher
+print ciphertext
+
+loop through individual character in string to see if they are valid
