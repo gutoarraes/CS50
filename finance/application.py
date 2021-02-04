@@ -119,7 +119,21 @@ def quote():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """Register user"""
-    return apology("TODO")
+    if request.method == "GET":
+        return render_template("register.html")
+    else:
+        name = request.form.get("username")
+        if not name:
+            return render_template("apology.html", message="You must provide a username.")
+        password = request.form.get("password")
+        if not password:
+            return render_template("apology.html", message="You must provide a password.")
+        if not confirm_password:
+            return render_template("apology.html", message="You must repeat the same password.")
+        if password is confirm_password:
+            hash = werkzeug.security.generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
+            db.execute("INSERT INTO registrants (name, hash) VALUES (:username, :email)", name=name, hash=hash)
+        return redirect("/")
 
 
 @app.route("/sell", methods=["GET", "POST"])
