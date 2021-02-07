@@ -33,7 +33,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///finance.db")
+db = SQL("sqlite:///finance.db", connect_args={'check_same_thread': False})
 
 # Make sure API key is set
 if not os.environ.get("API_KEY"):
@@ -124,15 +124,18 @@ def register():
     else:
         name = request.form.get("username")
         if not name:
-            return render_template("apology.html", message="You must provide a username.")
+            return apology("must provide name", code=406)
         password = request.form.get("password")
         if not password:
-            return render_template("apology.html", message="You must provide a password.")
-        if not confirm_password:
-            return render_template("apology.html", message="You must repeat the same password.")
-        if password is confirm_password:
-            hash = werkzeug.security.generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
-            db.execute("INSERT INTO registrants (name, hash) VALUES (:username, :email)", name=name, hash=hash)
+            return apology("must provide password", code=406)
+        password2 = request.form.get("password2")
+        if not password2:
+            return apology("must provide password confirmation", code=406)
+        if password != password2:
+            return apology("passwords must match", code=406)
+        else:
+            hash_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
+            db.execute("INSERT INTO users (username, hash) VALUES (:username, :hash)", username=name, hash=hash_password)
         return redirect("/")
 
 
