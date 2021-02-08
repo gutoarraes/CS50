@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Log In
+{% endblock %}
+
+{% block main %}
+   <form action="/register" method="post">
+        <input type='text' name='quote' placeholder='What stock are you searching for?'>
+        <input type='submit'>
+    </form>
+{% endblock %}
