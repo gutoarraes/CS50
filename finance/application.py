@@ -116,6 +116,9 @@ def quote():
     if request.method == "GET":
         return render_template("/quote.html")
     else:
+        stock = request.form.get("quote")
+        print(f"A share of {name} {symbol} costs ${price}.")
+
 
 
 
