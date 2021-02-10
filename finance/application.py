@@ -113,11 +113,23 @@ def logout():
 @login_required
 def quote():
     """Get stock quote."""
+
+    #if method is GET then request page
     if request.method == "GET":
         return render_template("/quote.html")
     else:
-        stock = request.form.get("quote")
-        print(f"A share of {name} {symbol} costs ${price}.")
+
+    #if method is POST something is being input into the page, which is the stock's symbol being submitted so the user can retrieve the stock's information
+        stock = request.form.get("stock")
+        acao = lookup(stock)
+
+    #in case the field is empty
+        if not stock:
+            return apology("must provide stock name", code=406)
+        else:
+            return render_template("/quoted.html", name_stock=acao["name"] , price_stock=acao["price"] , symbol_stock=acao["symbol"])
+
+
 
 
 
@@ -125,6 +137,9 @@ def quote():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """Register user"""
+    # in this method we prevent the user from leaving any field empty
+    # Also we require that the "password" field and the "password confirmation" fields are the same
+
     if request.method == "GET":
         return render_template("register.html")
     else:
