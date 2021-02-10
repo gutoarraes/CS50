@@ -114,21 +114,24 @@ def logout():
 def quote():
     """Get stock quote."""
 
-    #if method is GET then request page
+    # if method is GET then request page
     if request.method == "GET":
         return render_template("/quote.html")
     else:
 
-    #if method is POST something is being input into the page, which is the stock's symbol being submitted so the user can retrieve the stock's information
+    # if method is POST something is being input into the page, which is the stock's symbol being submitted so the user can retrieve the stock's information
         stock = request.form.get("stock")
-        acao = lookup(stock)
 
-    #in case the field is empty
+        # in case the field is empty
         if not stock:
             return apology("must provide stock name", code=406)
+
+        acao = lookup(stock)
+        # in case the symbol can't be found due to mispelling, wrong stock exchange or anything else
+        if acao == None:
+            return apology("symbol does not exist in the database", code=406)
         else:
             return render_template("/quoted.html", name_stock=acao["name"] , price_stock=acao["price"] , symbol_stock=acao["symbol"])
-
 
 
 
