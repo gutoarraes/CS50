@@ -6,7 +6,10 @@
 
 {% block main %}
     <form action="/quote" method="post">
-        <input type='text' name='stock' placeholder='What stock are you searching for?'>
+        <script>
+            input.setAttribute('size',input.getAttribute('placeholder').length);
+        </script>
+        <input type='text' name='stock' placeholder='Symbol?' size=20 style="text-align:center">
         <input type='submit'>
     </form>
 {% endblock %}
