@@ -54,6 +54,11 @@ def buy():
     if request.method == "GET":
         return render_template("/buy.html")
     else:
+        # create variable called 'amount' with qty of stocks times current price.
+        # Check if user has at least amount money as cash
+        # add user, stock symbol, stock qty to database
+        # diminish cash balance in the user table by 'amount'
+        # redirect to ("/")
         return apology("TODO")
 
 
