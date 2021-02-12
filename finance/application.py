@@ -55,11 +55,29 @@ def buy():
         return render_template("/buy.html")
     else:
         # create variable called 'amount' with qty of stocks times current price.
+        stock = request.form.get("stock")
+        quantity = request.form.get("quantity")
+        # in case the field is empty
+        if not stock:
+            return apology("must provide stock name", code=406)
+
+        # dictionary of company name, symbol, price. 'acao' means stock in portuguese
+        acao = lookup(stock)
+
+        current_price = acao["price"]
+
+        #price to be paid for the purchase
+        amount = current_price * float(quantity)
+
+        if db.execute("SELECT cash FROM users WHERE username = :username", username=request.form.get("username")) >= amount:
+            return True
+
         # Check if user has at least amount money as cash
         # add user, stock symbol, stock qty to database
         # diminish cash balance in the user table by 'amount'
         # redirect to ("/")
-        return apology("TODO")
+
+
 
 
 @app.route("/history")
