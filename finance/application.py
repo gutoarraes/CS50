@@ -55,8 +55,8 @@ def buy():
         return render_template("/buy.html")
     else:
         # create variable called 'amount' with qty of stocks times current price.
-        stock = request.form.get("stock")
-        quantity = request.form.get("quantity")
+        stock = request.form.get("stock").upper()
+        quantity = int(request.form.get("quantity"))
         # in case the field is empty
         if not stock:
             return apology("must provide stock name", code=406)
@@ -69,15 +69,33 @@ def buy():
         #price to be paid for the purchase
         amount = current_price * float(quantity)
 
-        if db.execute("SELECT cash FROM users WHERE username = :username", username=request.form.get("username")) >= amount:
-            return True
-
-        # Check if user has at least amount money as cash
-        # add user, stock symbol, stock qty to database
-        # diminish cash balance in the user table by 'amount'
-        # redirect to ("/")
+        #amount of money available
+        username = session["user_id"]
+        available = db.execute("SELECT cash FROM users WHERE id = :id", id = username)[0]["cash"]
 
 
+        # Check if user already owns stocks of the symbol he wishes to buy AND he has enough money to execute the purchase
+        if  db.execute("SELECT COUNT(*) FROM portfolio WHERE id = :id and symbol = :symbol", id = username, symbol=stock)[0]["COUNT(*)"] > 0 and available >= amount:
+            current = db.execute("SELECT quantity FROM portfolio WHERE id = :id", id = username)[0]["quantity"]
+            new_amount = current + quantity
+            db.execute("UPDATE portfolio SET quantity = :quantity WHERE id = :id", id = username, quantity = new_amount)
+            # diminish his cash
+            new_cash = db.execute("SELECT cash FROM users WHERE id = :id", id = username)[0]["cash"] - amount
+            db.execute("UPDATE users SET cash = :cash WHERE id = :id", id = username, cash = new_cash)
+            # PROBLEM Amount of all stocks is becoming the same
+            return apology("Done", code=406)
+
+        # If he doesn't own any such stocks yet, but has the money to purchase them
+        elif available >= amount:
+            #TODO COMPLETE PURCHASE
+            db.execute("INSERT INTO portfolio (username, symbol, quantity) VALUES (:username, :symbol, :quantity)", id = username, symbol=stock, quantity=quantity)
+            new_cash = db.execute("SELECT cash FROM users WHERE id = :id", id = username)[0]["cash"] - amount
+            db.execute("UPDATE users SET cash = :cash WHERE id = :id", id = username, cash = new_cash)
+            # PRINT USED TO SEE THE CURRENT CASH --- print(db.execute("SELECT cash FROM users WHERE id = :id", id = username)[0]["cash"])
+            return apology("Done", code=406)
+
+        else:
+            return apology("Not enough money to complete the purchase", code=406)
 
 
 @app.route("/history")
