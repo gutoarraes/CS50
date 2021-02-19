@@ -78,7 +78,7 @@ def buy():
         if  db.execute("SELECT COUNT(*) FROM portfolio WHERE id = :id and symbol = :symbol", id = username, symbol=stock)[0]["COUNT(*)"] > 0 and available >= amount:
             current = db.execute("SELECT quantity FROM portfolio WHERE id = :id", id = username)[0]["quantity"]
             new_amount = current + quantity
-            db.execute("UPDATE portfolio SET quantity = :quantity WHERE id = :id", id = username, quantity = new_amount)
+            db.execute("UPDATE portfolio SET quantity = :quantity WHERE id = :id AND symbol = :symbol", id = username, symbol = stock, quantity = new_amount)
             # diminish his cash
             new_cash = db.execute("SELECT cash FROM users WHERE id = :id", id = username)[0]["cash"] - amount
             db.execute("UPDATE users SET cash = :cash WHERE id = :id", id = username, cash = new_cash)
