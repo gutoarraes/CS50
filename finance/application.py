@@ -192,19 +192,26 @@ def register():
     else:
         name = request.form.get("username")
         if not name:
-            return apology("must provide name", code=406)
+            return apology("must provide name", code=400)
         password = request.form.get("password")
         if not password:
-            return apology("must provide password", code=406)
-        password2 = request.form.get("password2")
+            return apology("must provide password", code=400)
+        password2 = request.form.get("confirmation")
         if not password2:
-            return apology("must provide password confirmation", code=406)
+            return apology("must provide password confirmation", code=400)
         if password != password2:
-            return apology("passwords must match", code=406)
-        else:
+            return apology("passwords must match", code=400)
+
+        # Check if the username already exists on the database
+        elif db.execute("SELECT COUNT(*) username FROM users WHERE username = :username", username = name)[0]["username"] == 0 :
             hash_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
             db.execute("INSERT INTO users (username, hash) VALUES (:username, :hash)", username=name, hash=hash_password)
-        return redirect("/")
+            return redirect("/")
+        else:
+            return apology("username already taken", code=400)
+
+
+    # TODO Insert verification that the Username is NOT taken
 
 
 @app.route("/sell", methods=["GET", "POST"])
