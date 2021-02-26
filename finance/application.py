@@ -44,7 +44,27 @@ if not os.environ.get("API_KEY"):
 @login_required
 def index():
     """Show portfolio of stocks"""
-    return apology("TODO")
+    # create variables to collect all information needed to be displayed in this page (stocks, quantity, current price, value, sum of all stocks value, total cash, cash + holdings)
+    username = session["user_id"]
+    value_holdings = 0
+    stocks = db.execute("SELECT * FROM portfolio WHERE id = :id", id = username)
+    for stock in stocks:
+        shares = int(stock["quantity"])
+        symbol = stock["symbol"]
+        name = lookup(symbol)["name"]
+        price = lookup(symbol)["price"]
+        value = float(price * shares)
+        value_holdings += value
+
+        stock["name"] = name
+        stock["price"] = usd(price)
+        stock["value"] = usd(value)
+        stock["shares"] = shares
+
+    cash = (db.execute("SELECT cash FROM users WHERE id = :id", id = username))[0]["cash"]
+    total_assets = cash + value_holdings
+    print(lookup(symbol)["name"])
+    return render_template("/index.html", stocks=stocks ,name=name, price=usd(price), total_assets=usd(total_assets), symbol=symbol, cash=usd(cash), value=value)
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -55,8 +75,8 @@ def buy():
         return render_template("/buy.html")
     else:
         # create variable called 'amount' with qty of stocks times current price.
-        stock = request.form.get("stock").upper()
-        quantity = int(request.form.get("quantity"))
+        stock = request.form.get("symbol").upper()
+        quantity = int(request.form.get("shares"))
         # in case the field is empty
         if not stock:
             return apology("must provide stock name", code=406)
@@ -135,7 +155,7 @@ def login():
         session["user_id"] = rows[0]["id"]
 
         # Redirect user to home page
-        return redirect("/")
+        return redirect("/", code=200)
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
@@ -164,16 +184,16 @@ def quote():
     else:
 
     # if method is POST something is being input into the page, which is the stock's symbol being submitted so the user can retrieve the stock's information
-        stock = request.form.get("stock")
+        stock = request.form.get("symbol")
 
         # in case the field is empty
         if not stock:
-            return apology("must provide stock name", code=406)
+            return apology("must provide stock name", code=400)
 
         acao = lookup(stock)
         # in case the symbol can't be found due to mispelling, wrong stock exchange or anything else
         if acao == None:
-            return apology("symbol does not exist in the database", code=406)
+            return apology("symbol does not exist in the database", code=400)
         else:
             return render_template("/quoted.html", name_stock=acao["name"] , price_stock=acao["price"] , symbol_stock=acao["symbol"])
 
@@ -186,6 +206,7 @@ def register():
     """Register user"""
     # in this method we prevent the user from leaving any field empty
     # Also we require that the "password" field and the "password confirmation" fields are the same
+    # The database is verified for the same username being taken
 
     if request.method == "GET":
         return render_template("register.html")
@@ -206,12 +227,10 @@ def register():
         elif db.execute("SELECT COUNT(*) username FROM users WHERE username = :username", username = name)[0]["username"] == 0 :
             hash_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
             db.execute("INSERT INTO users (username, hash) VALUES (:username, :hash)", username=name, hash=hash_password)
-            return redirect("/")
+            return redirect("/", code=200)
         else:
             return apology("username already taken", code=400)
 
-
-    # TODO Insert verification that the Username is NOT taken
 
 
 @app.route("/sell", methods=["GET", "POST"])

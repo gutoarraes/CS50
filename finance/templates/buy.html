@@ -6,9 +6,9 @@
 
 {% block main %}
     <form action="/buy" method="post">
-        <input type='text' name='stock' placeholder='Symbol?' style="text-align: center" size=20>
-        <input type='number' step="1" min="1" name='quantity' placeholder='Qty?' style="text-align: center" size=20>
-        <input type='submit'>
+        <input type='text' name='symbol' placeholder='Symbol?' style="text-align: center" size=20>
+        <input type='number' step="1" min="1" name='shares' placeholder='Qty?' style="text-align: center" size=20>
+        <button type='submit'> Submit </button>
     </form>
 {% endblock %}
 
