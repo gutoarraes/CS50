@@ -1,11 +1,11 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Buy
+    Sell
 {% endblock %}
 
 {% block main %}
-    <form action="/buy" method="post">
+    <form action="/sell" method="post">
         <input type='text' name='symbol' placeholder='Symbol?' style="text-align: center" size=20>
         <input type='number' step="1" min="1" name='shares' placeholder='Qty?' style="text-align: center" size=20>
         <button type='submit'> Submit </button>

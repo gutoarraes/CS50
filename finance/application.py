@@ -63,7 +63,6 @@ def index():
 
     cash = (db.execute("SELECT cash FROM users WHERE id = :id", id = username))[0]["cash"]
     total_assets = cash + value_holdings
-    print(lookup(symbol)["name"])
     return render_template("/index.html", stocks=stocks ,name=name, price=usd(price), total_assets=usd(total_assets), symbol=symbol, cash=usd(cash), value=value)
 
 
@@ -111,7 +110,6 @@ def buy():
             db.execute("INSERT INTO portfolio (username, symbol, quantity) VALUES (:username, :symbol, :quantity)", id = username, symbol=stock, quantity=quantity)
             new_cash = db.execute("SELECT cash FROM users WHERE id = :id", id = username)[0]["cash"] - amount
             db.execute("UPDATE users SET cash = :cash WHERE id = :id", id = username, cash = new_cash)
-            # PRINT USED TO SEE THE CURRENT CASH --- print(db.execute("SELECT cash FROM users WHERE id = :id", id = username)[0]["cash"])
             return apology("Done", code=406)
 
         else:
@@ -199,8 +197,6 @@ def quote():
 
 
 
-
-
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """Register user"""
@@ -237,6 +233,51 @@ def register():
 @login_required
 def sell():
     """Sell shares of stock"""
+    username = session["user_id"]
+    stock = request.form.get("symbol")
+    quantity = (request.form.get("shares"))
+
+    if request.method == "GET":
+        return render_template("/sell.html")
+    else:
+        # in case the field is empty request that a name be provided
+        if not stock:
+            return apology("must provide stock name", code=406)
+
+        # Check if user has such stock in his portfolio
+        if db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id = username, symbol=stock) == None:
+            return apology("user does not own this stock", code=400)
+
+        acao = lookup(stock)
+        current_price = acao["price"]
+
+        #price to be earned for the sale
+        profit = current_price * float(quantity)
+
+        # amount of shares owned by the user
+        shares_owned = db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id = username, symbol = stock)[0]["quantity"]
+        new_share_quantity = shares_owned - int(quantity)
+        current_cash = db.execute("SELECT cash FROM users WHERE id = :id", id = username)[0]["cash"]
+        new_cash = current_cash + profit
+
+        # check if user has stocks to sell
+        if not db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id = username, symbol = stock):
+            return apology("User doesn't have this stock", code=400)
+
+        # check if user has shares enough to sell the quantity requested to be sold by the user
+        if(db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id = username, symbol = stock)[0]["quantity"]) < int(quantity):
+            return apology("Not enough stocks to sell", code=400)
+
+        # If user wished to sell all shares, delete the entry from the database
+        elif shares_owned == int(quantity):
+            db.execute("DELETE FROM portfolio WHERE symbol = :symbol AND id = :id", id = username, symbol = stock)
+            db.execute("UPDATE users SET cash = :cash WHERE id = :id", id = username, cash = new_cash)
+
+        # If user wishes to sell some but not all his shares
+        elif shares_owned > int(quantity):
+            db.execute("UPDATE portfolio SET quantity = :quantity WHERE id = :id AND symbol =:symbol", id = username, quantity = new_share_quantity, symbol = stock)
+            db.execute("UPDATE users SET cash = :cash WHERE id = :id", id = username, cash = new_cash)
+
     return apology("TODO")
 
 
