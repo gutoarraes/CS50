@@ -245,8 +245,8 @@ def sell():
             return apology("must provide stock name", code=406)
 
         # # Check if user has such stock in his portfolio
-        # if db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id = username, symbol=stock) == None:
-        #     return apology("user does not own this stock", code=400)
+        if db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id = username, symbol=stock) == None:
+             return apology("user does not own this stock", code=400)
 
         acao = lookup(stock)
         current_price = acao["price"]
@@ -254,15 +254,16 @@ def sell():
         #price to be earned for the sale
         profit = current_price * float(quantity)
 
-        # amount of shares owned by the user
-        shares_owned = db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id = username, symbol = stock)[0]["quantity"]
-        new_share_quantity = shares_owned - int(quantity)
         current_cash = db.execute("SELECT cash FROM users WHERE id = :id", id = username)[0]["cash"]
         new_cash = current_cash + profit
 
         # check if user has stocks to sell
         if not db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id = username, symbol = stock):
-            return apology("User doesn't have this stock", code=400)
+             return apology("User doesn't have this stock", code=400)
+
+        shares_owned = db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id = username, symbol = stock)[0]["quantity"]
+        # amount of shares owned by the user
+        new_share_quantity = shares_owned - int(quantity)
 
         # check if user has shares enough to sell the quantity requested to be sold by the user
         if(db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id = username, symbol = stock)[0]["quantity"]) < int(quantity):
