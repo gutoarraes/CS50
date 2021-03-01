@@ -244,9 +244,9 @@ def sell():
         if not stock:
             return apology("must provide stock name", code=406)
 
-        # Check if user has such stock in his portfolio
-        if db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id = username, symbol=stock) == None:
-            return apology("user does not own this stock", code=400)
+        # # Check if user has such stock in his portfolio
+        # if db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id = username, symbol=stock) == None:
+        #     return apology("user does not own this stock", code=400)
 
         acao = lookup(stock)
         current_price = acao["price"]
@@ -278,7 +278,7 @@ def sell():
             db.execute("UPDATE portfolio SET quantity = :quantity WHERE id = :id AND symbol =:symbol", id = username, quantity = new_share_quantity, symbol = stock)
             db.execute("UPDATE users SET cash = :cash WHERE id = :id", id = username, cash = new_cash)
 
-    return apology("TODO")
+    return apology("SOLD!")
 
 
 def errorhandler(e):
