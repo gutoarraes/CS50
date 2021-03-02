@@ -1,4 +1,5 @@
 import os
+import datetime
 
 from cs50 import SQL
 from flask import Flask, flash, jsonify, redirect, render_template, request, session
@@ -82,7 +83,7 @@ def buy():
 
         # dictionary of company name, symbol, price. 'acao' means stock in portuguese
         acao = lookup(stock)
-
+        now = datetime.datetime.now()
         current_price = acao["price"]
 
         #price to be paid for the purchase
@@ -101,6 +102,8 @@ def buy():
             # diminish his cash
             new_cash = db.execute("SELECT cash FROM users WHERE id = :id", id = username)[0]["cash"] - amount
             db.execute("UPDATE users SET cash = :cash WHERE id = :id", id = username, cash = new_cash)
+            db.execute("INSERT INTO trade (id, type, price, symbol, shares, date) VALUES (:id,:type,:price,:symbol,:shares,:date)",
+                id = username, symbol = stock, shares = quantity, type = "BUY", date = now, price = current_price)
             # PROBLEM Amount of all stocks is becoming the same
             return apology("Done", code=406)
 
@@ -110,6 +113,8 @@ def buy():
             db.execute("INSERT INTO portfolio (username, symbol, quantity) VALUES (:username, :symbol, :quantity)", id = username, symbol=stock, quantity=quantity)
             new_cash = db.execute("SELECT cash FROM users WHERE id = :id", id = username)[0]["cash"] - amount
             db.execute("UPDATE users SET cash = :cash WHERE id = :id", id = username, cash = new_cash)
+            db.execute("INSERT INTO trade (id, type, price, symbol, shares, date) VALUES (:id,:type,:price,:symbol,:shares,:date)",
+                id = username, symbol = stock, shares = quantity, type = "BUY", date = now, price = current_price)
             return apology("Done", code=406)
 
         else:
@@ -153,7 +158,7 @@ def login():
         session["user_id"] = rows[0]["id"]
 
         # Redirect user to home page
-        return redirect("/", code=200)
+        return redirect("/")
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
@@ -236,6 +241,7 @@ def sell():
     username = session["user_id"]
     stock = request.form.get("symbol")
     quantity = (request.form.get("shares"))
+    now = datetime.datetime.now()
 
     if request.method == "GET":
         return render_template("/sell.html")
@@ -278,6 +284,8 @@ def sell():
         elif shares_owned > int(quantity):
             db.execute("UPDATE portfolio SET quantity = :quantity WHERE id = :id AND symbol =:symbol", id = username, quantity = new_share_quantity, symbol = stock)
             db.execute("UPDATE users SET cash = :cash WHERE id = :id", id = username, cash = new_cash)
+            db.execute("INSERT INTO trade (id, type, price, symbol, shares, date) VALUES (:id,:type,:price,:symbol,:shares,:date)",
+                id = username, symbol = stock, shares = quantity, type = "SELL", date = now, price = current_price)
 
     return apology("SOLD!")
 

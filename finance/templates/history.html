@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+
+{% block title %}
+History
+{% endblock %}
+
+{% block main %}
+    <table class="table table-striped">
+  <thead>
+    <tr>
+      <th scope="col">Symbol</th>
+      <th scope="col">Type of trade</th>
+      <th scope="col">Shares</th>
+      <th scope="col">Price</th>
+      <th scope="col">Date</th>
+    </tr>
+  </thead>
+  <tbody>
+      {% for stock in stocks %}
+    <tr>
+      <th scope="row">{{ stock.symbol }}</th>
+      <td>{{ stock.name }}</td>
+      <td>{{ stock.shares }}</td>
+      <td>{{ stock.price }}</td>
+      <td>{{ stock.value }}</td>
+    </tr>
+    {% endfor %}
+    <thead>
+      <tr>
+        <th scope="col">CASH AVAILABLE</th>
+        <th scope="col"></th>
+        <th scope="col"></th>
+        <th scope="col"></th>
+        <th scope="row">{{ cash }}</th>
+      </tr>
+    </thead>
+    <thead>
+      <tr>
+        <th scope="col">TOTAL</th>
+        <th scope="col"></th>
+        <th scope="col"></th>
+        <th scope="col"></th>
+        <th scope="row">{{ total_assets }}</th>
+      </tr>
+    </thead>
+  </tbody>
+</table>
+{% endblock %}
