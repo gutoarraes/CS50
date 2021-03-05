@@ -1,4 +1,5 @@
 This is application was the exercise of week 9 of the 2021 Introduction to computer science course which simulated a brokerage account.
+After creating a username and password, all users have $10,000.00 available to buy and sell stocks at will.
 
 The specification of this exercise demanded that the following functions were implemented:
   - REGISTER - allowed the user to register a login and password (with validation);
