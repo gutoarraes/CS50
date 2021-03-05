@@ -1,2 +1,0 @@
-Loop through amount of levels in the pyramid.
-Each level increase the amount of '#' by 1
