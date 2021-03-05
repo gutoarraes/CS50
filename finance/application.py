@@ -17,12 +17,15 @@ app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 # Ensure responses aren't cached
+
+
 @app.after_request
 def after_request(response):
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Expires"] = 0
     response.headers["Pragma"] = "no-cache"
     return response
+
 
 # Custom filter
 app.jinja_env.filters["usd"] = usd
@@ -47,24 +50,32 @@ def index():
     """Show portfolio of stocks"""
     # create variables to collect all information needed to be displayed in this page (stocks, quantity, current price, value, sum of all stocks value, total cash, cash + holdings)
     username = session["user_id"]
-    value_holdings = 0
-    stocks = db.execute("SELECT * FROM portfolio WHERE id = :id", id = username)
-    for stock in stocks:
-        shares = int(stock["quantity"])
-        symbol = stock["symbol"]
-        name = lookup(symbol)["name"]
-        price = lookup(symbol)["price"]
-        value = float(price * shares)
-        value_holdings += value
+    value_holdings = []
+    stocks = db.execute("SELECT * FROM portfolio WHERE id = :id", id=username)
+    if db.execute("SELECT * FROM portfolio WHERE id = :id", id=username):
+        for stock in stocks:
+            shares = int(stock["quantity"])
+            symbol = str(stock["symbol"])
+            name = lookup(symbol)["name"]
+            price = float(lookup(symbol)["price"])
+            value = float(price * shares)
+            value_holdings.append(value)
 
-        stock["name"] = name
-        stock["price"] = usd(price)
-        stock["value"] = usd(value)
-        stock["shares"] = shares
+            stock["name"] = name
+            stock["price"] = usd(price)
+            stock["value"] = usd(value)
+            stock["shares"] = shares
+    else:
+        shares = 0
+        symbol = 0
+        name = 0
+        price = 0
+        value = 0
+        value_holdings = [0]
 
-    cash = (db.execute("SELECT cash FROM users WHERE id = :id", id = username))[0]["cash"]
-    total_assets = cash + value_holdings
-    return render_template("/index.html", stocks=stocks ,name=name, price=usd(price), total_assets=usd(total_assets), symbol=symbol, cash=usd(cash), value=value)
+    cash = float(db.execute("SELECT cash FROM users WHERE id = :id", id=username)[0]["cash"])
+    total_assets = (cash + sum(value_holdings))
+    return render_template("/index.html", stocks=stocks, price=usd(price), total_assets=usd(total_assets), symbol=symbol, cash=usd(cash), value=value)
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -76,46 +87,53 @@ def buy():
     else:
         # create variable called 'amount' with qty of stocks times current price.
         stock = request.form.get("symbol").upper()
-        quantity = int(request.form.get("shares"))
+        try:
+            quantity = int(request.form.get("shares"))
+        except ValueError:
+            return apology("shares must be a posative integer", 400)
         # in case the field is empty
         if not stock:
-            return apology("must provide stock name", code=406)
+            return apology("must provide stock name", code=400)
 
         # dictionary of company name, symbol, price. 'acao' means stock in portuguese
         acao = lookup(stock)
+        if acao == None:
+            return apology("Invalid stock symbol", code=400)
+
         now = datetime.datetime.now()
         current_price = acao["price"]
 
-        #price to be paid for the purchase
+        # price to be paid for the purchase
         amount = current_price * float(quantity)
 
-        #amount of money available
+        # amount of money available
         username = session["user_id"]
-        available = db.execute("SELECT cash FROM users WHERE id = :id", id = username)[0]["cash"]
-
+        available = db.execute("SELECT cash FROM users WHERE id = :id", id=username)[0]["cash"]
 
         # Check if user already owns stocks of the symbol he wishes to buy AND he has enough money to execute the purchase
-        if  db.execute("SELECT COUNT(*) FROM portfolio WHERE id = :id and symbol = :symbol", id = username, symbol=stock)[0]["COUNT(*)"] > 0 and available >= amount:
-            current = db.execute("SELECT quantity FROM portfolio WHERE id = :id", id = username)[0]["quantity"]
+        if db.execute("SELECT COUNT(*) FROM portfolio WHERE id = :id and symbol = :symbol", id=username, symbol=stock)[0]["COUNT(*)"] > 0 and available >= amount:
+            current = db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol",
+                                 id=username, symbol=stock)[0]["quantity"]
             new_amount = current + quantity
-            db.execute("UPDATE portfolio SET quantity = :quantity WHERE id = :id AND symbol = :symbol", id = username, symbol = stock, quantity = new_amount)
+            db.execute("UPDATE portfolio SET quantity = :quantity WHERE id = :id AND symbol = :symbol",
+                       id=username, symbol=stock, quantity=new_amount)
             # diminish his cash
-            new_cash = db.execute("SELECT cash FROM users WHERE id = :id", id = username)[0]["cash"] - amount
-            db.execute("UPDATE users SET cash = :cash WHERE id = :id", id = username, cash = new_cash)
+            new_cash = db.execute("SELECT cash FROM users WHERE id = :id", id=username)[0]["cash"] - amount
+            db.execute("UPDATE users SET cash = :cash WHERE id = :id", id=username, cash=new_cash)
             db.execute("INSERT INTO trade (id, type, price, symbol, shares, date) VALUES (:id,:type,:price,:symbol,:shares,:date)",
-                id = username, symbol = stock, shares = quantity, type = "BUY", date = now, price = current_price)
+                       id=username, symbol=stock, shares=quantity, type="BUY", date=now, price=current_price)
             # PROBLEM Amount of all stocks is becoming the same
-            return apology("Done", code=406)
+            return redirect("/")
 
         # If he doesn't own any such stocks yet, but has the money to purchase them
         elif available >= amount:
-            #TODO COMPLETE PURCHASE
-            db.execute("INSERT INTO portfolio (username, symbol, quantity) VALUES (:username, :symbol, :quantity)", id = username, symbol=stock, quantity=quantity)
-            new_cash = db.execute("SELECT cash FROM users WHERE id = :id", id = username)[0]["cash"] - amount
-            db.execute("UPDATE users SET cash = :cash WHERE id = :id", id = username, cash = new_cash)
-            db.execute("INSERT INTO trade (id, type, price, symbol, shares, date) VALUES (:id,:type,:price,:symbol,:shares,:date)",
-                id = username, symbol = stock, shares = quantity, type = "BUY", date = now, price = current_price)
-            return apology("Done", code=406)
+            db.execute("INSERT INTO portfolio (id, symbol, quantity) VALUES (:id, :symbol, :quantity)",
+                       id=username, symbol=stock, quantity=quantity)
+            new_cash = db.execute("SELECT cash FROM users WHERE id = :id", id=username)[0]["cash"] - amount
+            db.execute("UPDATE users SET cash = :cash WHERE id = :id", id=username, cash=new_cash)
+            db.execute("INSERT INTO trade (id, type, price, symbol, shares, date) VALUES (:id, :type, :price, :symbol, :shares, :date)",
+                       id=username, symbol=stock, shares=quantity, type="BUY", date=now, price=current_price)
+            return redirect("/")
 
         else:
             return apology("Not enough money to complete the purchase", code=406)
@@ -186,7 +204,7 @@ def quote():
         return render_template("/quote.html")
     else:
 
-    # if method is POST something is being input into the page, which is the stock's symbol being submitted so the user can retrieve the stock's information
+        # if method is POST something is being input into the page, which is the stock's symbol being submitted so the user can retrieve the stock's information
         stock = request.form.get("symbol")
 
         # in case the field is empty
@@ -198,8 +216,7 @@ def quote():
         if acao == None:
             return apology("symbol does not exist in the database", code=400)
         else:
-            return render_template("/quoted.html", name_stock=acao["name"] , price_stock=acao["price"] , symbol_stock=acao["symbol"])
-
+            return render_template("/quoted.html", name_stock=acao["name"], price_stock=usd(acao["price"]), symbol_stock=acao["symbol"])
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -225,13 +242,12 @@ def register():
             return apology("passwords must match", code=400)
 
         # Check if the username already exists on the database
-        elif db.execute("SELECT COUNT(*) username FROM users WHERE username = :username", username = name)[0]["username"] == 0 :
+        elif db.execute("SELECT COUNT(*) username FROM users WHERE username = :username", username=name)[0]["username"] == 0:
             hash_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
             db.execute("INSERT INTO users (username, hash) VALUES (:username, :hash)", username=name, hash=hash_password)
-            return redirect("/", code=200)
+            return redirect("/")
         else:
             return apology("username already taken", code=400)
-
 
 
 @app.route("/sell", methods=["GET", "POST"])
@@ -251,41 +267,43 @@ def sell():
             return apology("must provide stock name", code=406)
 
         # # Check if user has such stock in his portfolio
-        if db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id = username, symbol=stock) == None:
-             return apology("user does not own this stock", code=400)
+        if db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id=username, symbol=stock) == None:
+            return apology("user does not own this stock", code=400)
 
         acao = lookup(stock)
         current_price = acao["price"]
 
-        #price to be earned for the sale
+        # price to be earned for the sale
         profit = current_price * float(quantity)
 
-        current_cash = db.execute("SELECT cash FROM users WHERE id = :id", id = username)[0]["cash"]
+        current_cash = db.execute("SELECT cash FROM users WHERE id = :id", id=username)[0]["cash"]
         new_cash = current_cash + profit
 
         # check if user has stocks to sell
-        if not db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id = username, symbol = stock):
-             return apology("User doesn't have this stock", code=400)
+        if not db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id=username, symbol=stock):
+            return apology("User doesn't have this stock", code=400)
 
-        shares_owned = db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id = username, symbol = stock)[0]["quantity"]
+        shares_owned = db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol",
+                                  id=username, symbol=stock)[0]["quantity"]
         # amount of shares owned by the user
         new_share_quantity = shares_owned - int(quantity)
 
         # check if user has shares enough to sell the quantity requested to be sold by the user
-        if(db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id = username, symbol = stock)[0]["quantity"]) < int(quantity):
+        if(db.execute("SELECT quantity FROM portfolio WHERE id = :id AND symbol = :symbol", id=username, symbol=stock)[0]["quantity"]) < int(quantity):
             return apology("Not enough stocks to sell", code=400)
 
         # If user wished to sell all shares, delete the entry from the database
         elif shares_owned == int(quantity):
-            db.execute("DELETE FROM portfolio WHERE symbol = :symbol AND id = :id", id = username, symbol = stock)
-            db.execute("UPDATE users SET cash = :cash WHERE id = :id", id = username, cash = new_cash)
+            db.execute("DELETE FROM portfolio WHERE symbol = :symbol AND id = :id", id=username, symbol=stock)
+            db.execute("UPDATE users SET cash = :cash WHERE id = :id", id=username, cash=new_cash)
 
         # If user wishes to sell some but not all his shares
         elif shares_owned > int(quantity):
-            db.execute("UPDATE portfolio SET quantity = :quantity WHERE id = :id AND symbol =:symbol", id = username, quantity = new_share_quantity, symbol = stock)
-            db.execute("UPDATE users SET cash = :cash WHERE id = :id", id = username, cash = new_cash)
+            db.execute("UPDATE portfolio SET quantity = :quantity WHERE id = :id AND symbol =:symbol",
+                       id=username, quantity=new_share_quantity, symbol=stock)
+            db.execute("UPDATE users SET cash = :cash WHERE id = :id", id=username, cash=new_cash)
             db.execute("INSERT INTO trade (id, type, price, symbol, shares, date) VALUES (:id,:type,:price,:symbol,:shares,:date)",
-                id = username, symbol = stock, shares = quantity, type = "SELL", date = now, price = current_price)
+                       id=username, symbol=stock, shares=quantity, type="SELL", date=now, price=usd(current_price))
 
     return apology("SOLD!")
 
